@@ -303,6 +303,9 @@ def main():
     parser.add_argument(
         "--cache", help=argparse.SUPPRESS
     )  # normal, never, forever, ...
+    parser.add_argument(
+        "-u", "--untrimmed", action="store_true", help="Selects the untrimmed version of completed games."
+    )
     args = parser.parse_args()
 
     if args.usage:
@@ -512,6 +515,7 @@ def main():
         args.fetch,
         args.from_start,
         args.inning,
+        args.untrimmed
     )
 
 

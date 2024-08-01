@@ -339,6 +339,33 @@ class GameDataRetriever:
                                     game_rec["feed"][feedtype]["callLetters"] = str(
                                         stream["callLetters"]
                                     )
+                    elif media["title"] == 'Audio':
+                        for stream in media["items"]:
+                            feedtype = "audio-" + str(
+                                stream["type"]
+                            ).lower()
+                            if stream["language"] != 'en':
+                                lang_feedtype = feedtype + '-' + stream["language"]
+                                if lang_feedtype not in game_rec["feed"]:
+                                    feedtype = lang_feedtype
+                            game_rec["feed"][feedtype] = dict()
+                            if "mediaId" in stream:
+                                game_rec["feed"][feedtype]["mediaPlaybackId"] = str(
+                                    stream["mediaId"]
+                                )
+                                if "contentId" in stream:
+                                    game_rec["feed"][feedtype]["contentId"] = str(
+                                        stream["contentId"]
+                                    )
+                                game_rec["feed"][feedtype]["mediaState"] = str(
+                                    stream["mediaState"]
+                                )
+                                game_rec["feed"][feedtype]["eventId"] = str(
+                                    stream["id"]
+                                )
+                                game_rec["feed"][feedtype]["callLetters"] = str(
+                                    stream["callLetters"]
+                                )
                 if "epgAlternate" in game["content"]["media"]:
                     for media in game["content"]["media"]["epgAlternate"]:
                         if media["title"] == "Extended Highlights":

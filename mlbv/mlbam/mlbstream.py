@@ -19,14 +19,20 @@ LOG = logging.getLogger(__name__)
 
 def select_feed_for_team(game_rec, team_code, feedtype=None):
     found = False
+    if feedtype and feedtype.startswith('audio'):
+        config.CONFIG.parser["resolution"] = '50k'
     if game_rec["away"]["abbrev"] == team_code:
         found = True
         if feedtype is None and "away" in game_rec["feed"]:
             feedtype = "away"  # assume user wants their team's feed
+        elif feedtype == "audio" and "audio-away" in game_rec["feed"]:
+            feedtype = "audio-away"
     elif game_rec["home"]["abbrev"] == team_code:
         found = True
         if feedtype is None and "home" in game_rec["feed"]:
             feedtype = "home"  # assume user wants their team's feed
+        elif feedtype == "audio" and "audio-home" in game_rec["feed"]:
+            feedtype = "audio-home"
     if found:
         if feedtype is None:
             LOG.info(
@@ -95,6 +101,7 @@ def play_stream(
     fetch,
     from_start,
     inning_ident,
+    untrimmed,
     is_multi_highlight=False,
 ):
     if game_rec["doubleHeader"] != "N":
@@ -134,7 +141,8 @@ def play_stream(
     if stream_url is None:
         LOG.info("No game stream found for %s", team_to_play)
         return 0
-
+    if untrimmed:
+        stream_url = stream_url.replace('-trimmed', '')
     # stream_url = stream_url.replace('akc', 'llc')
     offset = None
     if config.SAVE_PLAYLIST_FILE:
@@ -155,6 +163,7 @@ def play_stream(
             feedtype,
             fetch,
         ),
+        fetch,
         from_start,
         offset,
     )

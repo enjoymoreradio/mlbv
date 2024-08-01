@@ -1,6 +1,3 @@
-import mlbv.mlbam.common.config as config
-
-
 LOG = None
 
 

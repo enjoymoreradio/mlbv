@@ -58,23 +58,26 @@ def _uniquify_fetch_filename(fetch_filename, strategy="date"):
 
 
 def get_fetch_filename(date_str, home_abbrev, away_abbrev, feedtype, fetch):
-    if fetch:
-        suffix = "ts"
-        if feedtype is None:
-            fetch_filename = "{}-{}-{}.{}".format(
-                date_str, away_abbrev, home_abbrev, suffix
-            )
-        else:
+    suffix=''
+    if feedtype is None:
+        if fetch:
+            suffix = ".ts"
+        fetch_filename = "{}-{}-{}{}".format(
+            date_str, away_abbrev, home_abbrev, suffix
+        )
+    else:
+        if fetch:
             if feedtype in (
-                "recap",
-                "condensed",
+            "recap",
+            "condensed",
             ):
-                suffix = "mp4"
-            fetch_filename = "{}-{}-{}-{}.{}".format(
-                date_str, away_abbrev, home_abbrev, feedtype, suffix
-            )
-        return _uniquify_fetch_filename(fetch_filename, strategy="index")
-    return None
+                suffix = ".mp4"
+            else:
+                suffix = ".ts"
+        fetch_filename = "{}-{}-{}-{}{}".format(
+            date_str, away_abbrev, home_abbrev, feedtype, suffix
+        )
+    return _uniquify_fetch_filename(fetch_filename, strategy="index")
 
 
 def play_highlight(playback_url, fetch_filename, is_multi_highlight=False):
@@ -132,7 +135,7 @@ def streamlink_highlight(playback_url, fetch_filename, is_multi_highlight=False)
 
 
 def streamlink(
-    stream_url, mlb_session, fetch_filename=None, from_start=False, offset=None
+    stream_url, mlb_session, title=None, fetch=False, from_start=False, offset=None
 ):
     LOG.debug("Stream url: %s", stream_url)
     # media_auth_cookie_str = access_token
@@ -142,7 +145,6 @@ def streamlink(
     video_player = config.CONFIG.parser["video_player"]
     streamlink_cmd = [
         "streamlink",
-        "--http-no-ssl-verify",
         "--http-cookie",
         "Authorization=" + mlb_session.access_token,
         "--http-header",
@@ -176,14 +178,16 @@ def streamlink(
         # the --playe-no-close is required so it doesn't shut things down
         # prematurely after the stream is fully fetched
         streamlink_cmd.append("--player-no-close")
-    if fetch_filename:
-        fetch_filename = _uniquify_fetch_filename(fetch_filename)
+    if fetch:
+        fetch_filename = _uniquify_fetch_filename(title)
         streamlink_cmd.append("--output")
         streamlink_cmd.append(fetch_filename)
     elif video_player:
         LOG.debug("Using video_player: %s", video_player)
         streamlink_cmd.append("--player")
         streamlink_cmd.append(video_player)
+        streamlink_cmd.append("--title")
+        streamlink_cmd.append(title)
         if config.CONFIG.parser.getboolean("streamlink_passthrough", False):
             streamlink_cmd.append("--player-passthrough=hls")
 
