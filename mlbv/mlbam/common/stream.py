@@ -147,9 +147,9 @@ def streamlink(
         "Authorization=" + mlb_session.access_token,
         "--http-header",
         user_agent_hdr,
-        "--hls-timeout",
+        "--stream-timeout",
         "600",  # default: 60
-        "--hls-segment-timeout",
+        "--stream-segment-timeout",
         "60",
     ]  # default: 10
     if from_start:
