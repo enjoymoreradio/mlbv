@@ -109,7 +109,7 @@ def select_feed_for_team_new(game_feeds, team_code, feedtype=None):
         # the prefered feed doesn't exist so pick the first available one
         found = available_feeds[0]
 
-    return found['mediaId'], found['mediaState']['state'], found['contentId']
+    return found['mediaId'], found['mediaState']['state'], found['contentId'], found['milestones']
 
 
 def find_highlight_url_for_team(game_rec, feedtype):
@@ -193,7 +193,7 @@ def play_stream(
 
     game_content = mlb_session.get_game_content(game_pk)
     # print(game_content)
-    media_playback_id, media_state, content_id = select_feed_for_team_new(
+    media_playback_id, media_state, content_id, milestones = select_feed_for_team_new(
         game_content, team_to_play, feedtype
     )
     if media_playback_id is None:
@@ -212,7 +212,7 @@ def play_stream(
         mlb_session.save_playlist_to_file(stream_url)
     if inning_ident:
         offset = _calculate_inning_offset(
-            inning_ident, media_state, media_playback_id, game_rec
+            inning_ident, media_state, milestones
         )
         if offset is None:
             return 0  # already logged
@@ -230,70 +230,105 @@ def play_stream(
         offset,
     )
 
-
-def _lookup_inning_timestamp_via_airings(
-    game_rec, media_playback_id, inning, inning_half="top", overwrite_json=True
+def _lookup_inning_timestamp_via_milestones(
+    milestones, inning, inning_half="top", overwrite_json=True
 ):
     broadcast_start = None
-    url = (
-        "https://search-api-mlbtv.mlb.com/svc/search/v2/graphql/persisted/"
-        "query/core/Airings?variables={{%22partnerProgramIds%22%3A[%22{gamepk}%22]}}"
-    ).format(gamepk=game_rec["game_pk"])
-    json_data = request.request_json(url, "airings", cache_stale=request.CACHE_SHORT)
-    for airing in json_data["data"]["Airings"]:
-        # there is a separate BROADCAST_START for each broadcast, so do lookup based on passed-in media id
-        LOG.debug(
-            "airing['mediaId']: %s, media_playback_id: %s",
-            str(airing["mediaId"]),
-            media_playback_id,
-        )
-        if str(airing["mediaId"]) != media_playback_id:
-            continue
-        if "milestones" not in airing:
-            LOG.warning(
-                "_lookup_inning_timestamp_via_airings: no milestone data for airing: %s",
-                str(airing),
-            )
-            continue
-        for milestone in airing["milestones"]:
-            if milestone["milestoneType"] == "BROADCAST_START":
-                for milestone_time in milestone["milestoneTime"]:
-                    if str(milestone_time["type"]) == "absolute":
-                        broadcast_start_str = str(milestone_time["startDatetime"])
-                        broadcast_start = parser.parse(broadcast_start_str).timestamp()
-            elif milestone["milestoneType"] == "INNING_START":
-                milestone_inning = "1"
-                milestone_inning_half = "top"
-                for keyword in milestone["keywords"]:
-                    if str(keyword["type"]) == "inning":
-                        milestone_inning = str(keyword["value"])
-                    elif str(keyword["type"]) == "top":
-                        if str(keyword["value"]) != "true":
-                            milestone_inning_half = "bottom"
-                if milestone_inning == inning and milestone_inning_half == inning_half:
-                    # we found it
-                    for milestone_time in milestone["milestoneTime"]:
-                        if str(milestone_time["type"]) == "absolute":
-                            inning_start_timestamp_str = milestone_time["startDatetime"]
-                            # inning_start_timestamp_str = str(play['about']['startTime'])
-                            inning_start_timestamp = parser.parse(
-                                inning_start_timestamp_str
-                            ).timestamp()
-                            LOG.info(
-                                "Found inning start: %s", inning_start_timestamp_str
-                            )
-                            LOG.debug("Milestone data: %s", str(milestone))
-                            return (
-                                broadcast_start,
-                                inning_start_timestamp,
-                                inning_start_timestamp_str,
-                            )
+    for milestone in milestones:
+        if milestone["milestoneType"] == "BROADCAST_START":
+            broadcast_start_str = str(milestone["absoluteTime"])
+            broadcast_start = parser.parse(broadcast_start_str).timestamp()
+        elif milestone["milestoneType"] == "INNING_START":
+            milestone_inning = "1"
+            milestone_inning_half = "top"
+            for keyword in milestone["keywords"]:
+                if str(keyword["name"]) == "inning":
+                    milestone_inning = str(keyword["value"])
+                elif str(keyword["name"]) == "top":
+                    if str(keyword["value"]) != "true":
+                        milestone_inning_half = "bottom"
+            if milestone_inning == inning and milestone_inning_half == inning_half:
+                # we found it
+                inning_start_timestamp_str = milestone["absoluteTime"]
+                inning_start_timestamp = parser.parse(
+                    inning_start_timestamp_str
+                ).timestamp()
+                LOG.info(
+                    "Found inning start: %s", inning_start_timestamp_str
+                )
+                LOG.debug("Milestone data: %s", str(milestone))
+                return (
+                    broadcast_start,
+                    inning_start_timestamp,
+                    inning_start_timestamp_str,
+                )
 
     LOG.warning("Could not locate '%s %s' inning", inning_half, inning)
     return broadcast_start, None, None
 
+# def _lookup_inning_timestamp_via_airings(
+#     game_rec, media_playback_id, inning, inning_half="top", overwrite_json=True
+# ):
+#     broadcast_start = None
+#     url = (
+#         "https://search-api-mlbtv.mlb.com/svc/search/v2/graphql/persisted/"
+#         "query/core/Airings?variables={{%22partnerProgramIds%22%3A[%22{gamepk}%22]}}"
+#     ).format(gamepk=game_rec["game_pk"])
+#     json_data = request.request_json(url, "airings", cache_stale=request.CACHE_SHORT)
+#     for airing in json_data["data"]["Airings"]:
+#         # there is a separate BROADCAST_START for each broadcast, so do lookup based on passed-in media id
+#         LOG.debug(
+#             "airing['mediaId']: %s, media_playback_id: %s",
+#             str(airing["mediaId"]),
+#             media_playback_id,
+#         )
+#         if str(airing["mediaId"]) != media_playback_id:
+#             continue
+#         if "milestones" not in airing:
+#             LOG.warning(
+#                 "_lookup_inning_timestamp_via_airings: no milestone data for airing: %s",
+#                 str(airing),
+#             )
+#             continue
+#         for milestone in airing["milestones"]:
+#             if milestone["milestoneType"] == "BROADCAST_START":
+#                 for milestone_time in milestone["milestoneTime"]:
+#                     if str(milestone_time["type"]) == "absolute":
+#                         broadcast_start_str = str(milestone_time["startDatetime"])
+#                         broadcast_start = parser.parse(broadcast_start_str).timestamp()
+#             elif milestone["milestoneType"] == "INNING_START":
+#                 milestone_inning = "1"
+#                 milestone_inning_half = "top"
+#                 for keyword in milestone["keywords"]:
+#                     if str(keyword["type"]) == "inning":
+#                         milestone_inning = str(keyword["value"])
+#                     elif str(keyword["type"]) == "top":
+#                         if str(keyword["value"]) != "true":
+#                             milestone_inning_half = "bottom"
+#                 if milestone_inning == inning and milestone_inning_half == inning_half:
+#                     # we found it
+#                     for milestone_time in milestone["milestoneTime"]:
+#                         if str(milestone_time["type"]) == "absolute":
+#                             inning_start_timestamp_str = milestone_time["startDatetime"]
+#                             # inning_start_timestamp_str = str(play['about']['startTime'])
+#                             inning_start_timestamp = parser.parse(
+#                                 inning_start_timestamp_str
+#                             ).timestamp()
+#                             LOG.info(
+#                                 "Found inning start: %s", inning_start_timestamp_str
+#                             )
+#                             LOG.debug("Milestone data: %s", str(milestone))
+#                             return (
+#                                 broadcast_start,
+#                                 inning_start_timestamp,
+#                                 inning_start_timestamp_str,
+#                             )
+#
+#     LOG.warning("Could not locate '%s %s' inning", inning_half, inning)
+#     return broadcast_start, None, None
 
-def _calculate_inning_offset(inning_offset, media_state, media_playback_id, game_rec):
+
+def _calculate_inning_offset(inning_offset, media_state, milestones):
     inning_half = "top"
     if inning_offset.startswith("b"):
         inning_half = "bottom"
@@ -305,8 +340,8 @@ def _calculate_inning_offset(inning_offset, media_state, media_playback_id, game
         broadcast_start_timestamp,
         inning_start_timestamp,
         inning_timestamp_str,
-    ) = _lookup_inning_timestamp_via_airings(
-        game_rec, media_playback_id, inning, inning_half
+    ) = _lookup_inning_timestamp_via_milestones(
+        milestones, inning, inning_half
     )
     if inning_start_timestamp is None:
         LOG.error("Inning '%s' not found in airing data", inning_offset)
