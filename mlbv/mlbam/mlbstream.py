@@ -75,7 +75,7 @@ def select_feed_for_team_new(game_feeds, team_code, feedtype=None):
 
     if not available_feeds:
         LOG.info("No video feeds available")
-        return None, None, None
+        return None, None, None, None
 
     for game_feed in available_feeds:
         # Ignore non-video
@@ -157,6 +157,7 @@ def play_stream(
     fetch,
     from_start,
     inning_ident,
+    no_evi,
     is_multi_highlight=False,
 ):
 #    import json
@@ -201,7 +202,7 @@ def play_stream(
         return 0
 
     # Authentication is triggered within here if necessary:
-    stream_url = mlb_session.lookup_stream_url(game_rec["game_pk"], media_playback_id)
+    stream_url = mlb_session.lookup_stream_url(game_rec["game_pk"], media_playback_id, no_evi)
     if stream_url is None:
         LOG.info("No game stream found for %s", team_to_play)
         return 0

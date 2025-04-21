@@ -224,7 +224,7 @@ class MLBSession(session.Session):
         return j['data']['contentSearch']['content']
 
     # Override
-    def lookup_stream_url(self, game_pk, media_id):
+    def lookup_stream_url(self, game_pk, media_id, no_evi):
         """game_pk: game_pk
         media_id: mediaPlaybackId
         """
@@ -273,8 +273,8 @@ class MLBSession(session.Session):
             LOG.error("Could not load stream\n%s", stream)
             return None
         stream_url = stream['data']['initPlaybackSession']['playback']['url']
-        if config.CONFIG.parser['no_evi']:
-            stream_url = re.sub("(\/|-)(evi|EVI)", stream_url)
+        if no_evi:
+            stream_url = re.sub("(/|-)(evi|EVI)", stream_url)
         return stream_url
 
     def _create_session(self):

@@ -344,8 +344,6 @@ def main():
         config.CONFIG.parser["verbose"] = "true"
     if args.cache:
         config.CONFIG.parser["cache"] = args.cache
-    if args.no_evi:
-        config.CONFIG.parser["no_evi"] = "true"
     if args.username:
         config.CONFIG.parser["username"] = args.username
     if args.password:
@@ -517,6 +515,7 @@ def main():
         args.fetch,
         args.from_start,
         args.inning,
+	args.no_evi
     )
 
 
