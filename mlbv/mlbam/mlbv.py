@@ -301,6 +301,9 @@ def main():
         "-D", "--debug", action="store_true", help=argparse.SUPPRESS
     )  # help="Turn on debug output")
     parser.add_argument(
+        "--no-evi", action="store_true", help=argparse.SUPPRESS
+    )  # help="Disable EVI (i.e. superimposed virtual ads)"
+    parser.add_argument(
         "--cache", help=argparse.SUPPRESS
     )  # normal, never, forever, ...
     args = parser.parse_args()
@@ -341,6 +344,8 @@ def main():
         config.CONFIG.parser["verbose"] = "true"
     if args.cache:
         config.CONFIG.parser["cache"] = args.cache
+    if args.no_evi:
+        config.CONFIG.parser["no_evi"] = args.no_evi
     if args.username:
         config.CONFIG.parser["username"] = args.username
     if args.password:
