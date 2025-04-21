@@ -345,7 +345,7 @@ def main():
     if args.cache:
         config.CONFIG.parser["cache"] = args.cache
     if args.no_evi:
-        config.CONFIG.parser["no_evi"] = args.no_evi
+        config.CONFIG.parser["no_evi"] = "true"
     if args.username:
         config.CONFIG.parser["username"] = args.username
     if args.password:
