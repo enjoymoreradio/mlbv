@@ -274,7 +274,7 @@ class MLBSession(session.Session):
             return None
         stream_url = stream['data']['initPlaybackSession']['playback']['url']
         if no_evi:
-            stream_url = re.sub("(/|-)(evi|EVI)", stream_url)
+            stream_url = re.sub("(/|-)(evi|EVI)", "", stream_url)
         return stream_url
 
     def _create_session(self):
