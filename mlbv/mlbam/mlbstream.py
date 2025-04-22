@@ -234,11 +234,14 @@ def play_stream(
 def _lookup_inning_timestamp_via_milestones(
     milestones, inning, inning_half="top", overwrite_json=True
 ):
-    broadcast_start = None
+    stream_start = None
     for milestone in milestones:
-        if milestone["milestoneType"] == "BROADCAST_START":
-            broadcast_start_str = str(milestone["absoluteTime"])
-            broadcast_start = parser.parse(broadcast_start_str).timestamp()
+	if milestone["milestoneType"] == "STREAM_START":
+            stream_start_str = str(milestone["absoluteTime"])
+            stream_start = parser.parse(stream_start_str).timestamp()
+        elif milestone["milestoneType"] == "BROADCAST_START" and stream_start == None:
+            stream_start_str = str(milestone["absoluteTime"])
+            stream_start = parser.parse(stream_start_str).timestamp()
         elif milestone["milestoneType"] == "INNING_START":
             milestone_inning = "1"
             milestone_inning_half = "top"
@@ -259,7 +262,7 @@ def _lookup_inning_timestamp_via_milestones(
                 )
                 LOG.debug("Milestone data: %s", str(milestone))
                 return (
-                    broadcast_start,
+                    stream_start,
                     inning_start_timestamp,
                     inning_start_timestamp_str,
                 )
