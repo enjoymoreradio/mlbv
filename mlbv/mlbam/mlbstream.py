@@ -236,7 +236,7 @@ def _lookup_inning_timestamp_via_milestones(
 ):
     stream_start = None
     for milestone in milestones:
-	if milestone["milestoneType"] == "STREAM_START":
+        if milestone["milestoneType"] == "STREAM_START":
             stream_start_str = str(milestone["absoluteTime"])
             stream_start = parser.parse(stream_start_str).timestamp()
         elif milestone["milestoneType"] == "BROADCAST_START" and stream_start == None:
