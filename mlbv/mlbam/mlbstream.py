@@ -155,6 +155,7 @@ def play_stream(
     feedtype,
     date_str,
     fetch,
+    record,
     from_start,
     inning_ident,
     no_evi,
@@ -225,8 +226,9 @@ def play_stream(
             game_rec["home"]["abbrev"],
             game_rec["away"]["abbrev"],
             feedtype,
-            fetch,
+            fetch or record,
         ),
+        record,
         from_start,
         offset,
     )

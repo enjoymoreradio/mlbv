@@ -240,10 +240,13 @@ def main():
     )  # help="MLB.tv password. Required for live/archived games.")
     parser.add_argument(
         "--fetch",
-        "--record",
         action="store_true",
         help="Save stream to file instead of playing",
     )
+    parser.add_argument(
+        "--record",
+        action="store_true",
+        help="Play stream and save to file concurrently")
     parser.add_argument(
         "--url", action="store_true", help="Output mlb.com/tv URL instead of playing"
     )
@@ -513,6 +516,7 @@ def main():
         feedtype,
         args.date,
         args.fetch,
+        args.record,
         args.from_start,
         args.inning,
 	args.no_evi

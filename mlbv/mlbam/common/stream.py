@@ -132,7 +132,7 @@ def streamlink_highlight(playback_url, fetch_filename, is_multi_highlight=False)
 
 
 def streamlink(
-    stream_url, mlb_session, fetch_filename=None, from_start=False, offset=None
+    stream_url, mlb_session, fetch_filename=None, record=False, from_start=False, offset=None
 ):
     LOG.debug("Stream url: %s", stream_url)
     # media_auth_cookie_str = access_token
@@ -178,7 +178,10 @@ def streamlink(
         streamlink_cmd.append("--player-no-close")
     if fetch_filename:
         fetch_filename = _uniquify_fetch_filename(fetch_filename)
-        streamlink_cmd.append("--output")
+        if record:
+            streamlink_cmd.append("--record")
+        else:
+            streamlink_cmd.append("--output")
         streamlink_cmd.append(fetch_filename)
     elif video_player:
         LOG.debug("Using video_player: %s", video_player)
