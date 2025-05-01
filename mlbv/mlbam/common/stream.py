@@ -176,6 +176,12 @@ def streamlink(
         # the --playe-no-close is required so it doesn't shut things down
         # prematurely after the stream is fully fetched
         streamlink_cmd.append("--player-no-close")
+    if video_player:
+        LOG.debug("Using video_player: %s", video_player)
+        streamlink_cmd.append("--player")
+        streamlink_cmd.append(video_player)
+        if config.CONFIG.parser.getboolean("streamlink_passthrough", False):
+            streamlink_cmd.append("--player-passthrough=hls")
     if fetch_filename:
         fetch_filename = _uniquify_fetch_filename(fetch_filename)
         if record:
@@ -183,12 +189,6 @@ def streamlink(
         else:
             streamlink_cmd.append("--output")
         streamlink_cmd.append(fetch_filename)
-    elif video_player:
-        LOG.debug("Using video_player: %s", video_player)
-        streamlink_cmd.append("--player")
-        streamlink_cmd.append(video_player)
-        if config.CONFIG.parser.getboolean("streamlink_passthrough", False):
-            streamlink_cmd.append("--player-passthrough=hls")
 
     streamlink_hls_audio_select = config.CONFIG.parser["streamlink_hls_audio_select"]
     if streamlink_hls_audio_select:
