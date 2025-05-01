@@ -256,6 +256,9 @@ def _lookup_inning_timestamp_via_milestones(
                 elif str(keyword["name"]) == "top":
                     if str(keyword["value"]) != "true":
                         milestone_inning_half = "bottom"
+        else:
+            continue
+            
         if milestone_inning == inning and milestone_inning_half == inning_half:
             # we found it
             inning_start_timestamp_str = milestone["absoluteTime"]
